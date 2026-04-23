@@ -5,53 +5,69 @@
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
-// ── Dimensions ─────────────────────────────────────────────
-const W = 800;
-const H = 450;
+// ── Dimensions (base, will scale) ─────────────────────────
+let W = 1200;
+let H = 600;
+const ASPECT = W / H; // 2:1
+const FLOOR_Y = 460;       // where the floor starts
+const WORLD_W = 2400;      // total scrollable width
+const PLAYER_SPEED = 3.2;
+
+// ── Responsive resize ─────────────────────────────────────
+function resize() {
+  const pad = 36; // room for HUD
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - pad;
+  let w = maxW;
+  let h = w / ASPECT;
+  if (h > maxH) { h = maxH; w = h * ASPECT; }
+  canvas.style.width = Math.floor(w) + 'px';
+  canvas.style.height = Math.floor(h) + 'px';
+  // Update HUD width to match
+  document.getElementById('hud').style.maxWidth = Math.floor(w) + 'px';
+  document.getElementById('hud').style.width = Math.floor(w) + 'px';
+}
 canvas.width = W;
 canvas.height = H;
+resize();
+window.addEventListener('resize', resize);
 
-const FLOOR_Y = 340;       // where the floor starts
-const GRAVITY = 0.5;
-const WORLD_W = 1800;      // total scrollable width
-const PLAYER_SPEED = 2.8;
-
-// ── Palette ────────────────────────────────────────────────
+// ── Palette (brighter) ────────────────────────────────────
 const C = {
-  bg:         '#1a1a2e',
-  wall:       '#2e2e4a',
-  wallLine:   '#3a3a5c',
-  floor:      '#3d3d5c',
-  floorLine:  '#4a4a6a',
-  ceiling:    '#252540',
-  wood:       '#5c4a32',
-  woodDk:     '#4a3a28',
-  woodLt:     '#6e5a3e',
-  gold:       '#e0c872',
-  screen:     '#72b8e0',
-  screenDk:   '#4a8ab0',
-  white:      '#e8e8e8',
-  paper:      '#d4d4c8',
-  red:        '#c85a5a',
-  blue:       '#5a7ac8',
-  green:      '#4ac87a',
-  coffee:     '#6e4a2a',
-  coffeeMach: '#555570',
-  skin:       '#e8c8a0',
-  hair:       '#4a3a2a',
-  shirt:      '#4a7ac8',
-  pants:      '#3a3a5c',
-  shadow:     'rgba(0,0,0,0.18)',
-  plant:      '#2d6e3f',
-  plantDk:    '#1e5a30',
-  pot:        '#8a6a4a',
-  purple:     '#6a5a8a',
-  purpleDk:   '#4a3a6a',
-  cork:       '#8a7a5a',
-  corkDk:     '#7a6a4a',
-  gray:       '#6a6a8a',
-  grayDk:     '#4a4a6a',
-  grayLt:     '#8a8aaa',
+  bg:         '#d8d4c8',
+  wall:       '#c4c0b4',
+  wallLine:   '#b0ac9e',
+  floor:      '#c0b898',
+  floorLine:  '#aca888',
+  ceiling:    '#dedad0',
+  wood:       '#7a6240',
+  woodDk:     '#6a5234',
+  woodLt:     '#8e764e',
+  gold:       '#f0d878',
+  screen:     '#82c8f0',
+  screenDk:   '#5a9ac0',
+  white:      '#f0f0f0',
+  paper:      '#e4e4d8',
+  red:        '#e07070',
+  blue:       '#6a8ae0',
+  green:      '#5ad88a',
+  coffee:     '#8a6038',
+  coffeeMach: '#6a6a88',
+  skin:       '#f0d8b0',
+  hair:       '#5a4a32',
+  shirt:      '#5a8ae0',
+  pants:      '#4a4a70',
+  shadow:     'rgba(0,0,0,0.14)',
+  plant:      '#3a8a50',
+  plantDk:    '#2a7040',
+  pot:        '#a08050',
+  purple:     '#8070a0',
+  purpleDk:   '#605080',
+  cork:       '#a08a60',
+  corkDk:     '#907a52',
+  gray:       '#8080a0',
+  grayDk:     '#606080',
+  grayLt:     '#a0a0c0',
 };
 
 // ── Camera ─────────────────────────────────────────────────
@@ -88,10 +104,10 @@ function closeDialog() {
   dialogOpen = false;
 }
 
-// ── Player ─────────────────────────────────────────────────
+// ── Player (bigger!) ──────────────────────────────────────
 const player = {
-  x: 200, y: FLOOR_Y,
-  w: 16, h: 32,
+  x: 280, y: FLOOR_Y,
+  w: 28, h: 56,
   vx: 0, vy: 0,
   dir: 1,       // 1=right, -1=left
   frame: 0,
@@ -103,7 +119,7 @@ const player = {
 // ── Interactable objects (world-space x) ───────────────────
 const objects = [
   {
-    x: 160, y: FLOOR_Y, w: 90, h: 110,
+    x: 200, y: FLOOR_Y, w: 120, h: 140,
     type: 'coffee',
     label: 'Coffee Machine',
     title: '☕ Coffee Machine',
@@ -123,7 +139,7 @@ single-origin beans.
  Then, have coffee."</i>`,
   },
   {
-    x: 400, y: FLOOR_Y, w: 160, h: 90,
+    x: 520, y: FLOOR_Y, w: 210, h: 120,
     type: 'desk',
     label: 'Work Station',
     title: '💻 Work Station',
@@ -141,7 +157,7 @@ Currently deployed at Vinçotte
   Databricks · Power BI · DevOps`,
   },
   {
-    x: 680, y: 100, w: 160, h: 100,
+    x: 880, y: 180, w: 200, h: 120,
     type: 'board',
     label: 'Notice Board',
     title: '📌 Interests & Hobbies',
@@ -162,7 +178,7 @@ Currently deployed at Vinçotte
   Coding, writing & documentation`,
   },
   {
-    x: 950, y: FLOOR_Y, w: 80, h: 160,
+    x: 1240, y: FLOOR_Y, w: 110, h: 200,
     type: 'bookshelf',
     label: 'Bookshelf',
     title: '📚 Skills & Tools',
@@ -183,7 +199,7 @@ Currently deployed at Vinçotte
   CI/CD for data · Lakehouse architecture`,
   },
   {
-    x: 1140, y: FLOOR_Y, w: 70, h: 130,
+    x: 1500, y: FLOOR_Y, w: 90, h: 170,
     type: 'server',
     label: 'Server Rack',
     title: '🖧 Data Infrastructure',
@@ -203,7 +219,7 @@ Currently deployed at Vinçotte
  that means they're working."</i>`,
   },
   {
-    x: 1330, y: 110, w: 140, h: 90,
+    x: 1740, y: 190, w: 180, h: 110,
     type: 'whiteboard',
     label: 'Whiteboard',
     title: '📋 Connect With Me',
@@ -219,7 +235,7 @@ Currently deployed at Vinçotte
 and check out the other items!</i>`,
   },
   {
-    x: 1560, y: FLOOR_Y, w: 130, h: 70,
+    x: 2050, y: FLOOR_Y, w: 170, h: 90,
     type: 'couch',
     label: 'Couch',
     title: '🛋️ About This Site',
@@ -241,12 +257,12 @@ have to be boring.
 
 // Decorations (non-interactive)
 const decorations = [
-  { x: 70,   type: 'plant' },
-  { x: 620,  type: 'plant' },
-  { x: 1080, type: 'plant' },
-  { x: 1500, type: 'plant' },
-  { x: 340,  type: 'window' },
-  { x: 1100, type: 'window' },
+  { x: 90,   type: 'plant' },
+  { x: 800,  type: 'plant' },
+  { x: 1420, type: 'plant' },
+  { x: 1980, type: 'plant' },
+  { x: 440,  type: 'window' },
+  { x: 1440, type: 'window' },
 ];
 
 // ── Pixel drawing helpers ──────────────────────────────────
@@ -271,20 +287,20 @@ function drawRoom() {
   // Back wall
   rectAbs(0, 0, W, FLOOR_Y, C.wall);
   // Wallpaper stripe pattern
-  for (let wx = -camX % 64; wx < W; wx += 64) {
+  for (let wx = -camX % 80; wx < W; wx += 80) {
     rectAbs(wx, 0, 2, FLOOR_Y, C.wallLine);
   }
   // Baseboard
-  rectAbs(0, FLOOR_Y - 6, W, 6, C.woodDk);
-  rectAbs(0, FLOOR_Y - 6, W, 2, C.woodLt);
+  rectAbs(0, FLOOR_Y - 8, W, 8, C.woodDk);
+  rectAbs(0, FLOOR_Y - 8, W, 3, C.woodLt);
   // Ceiling trim
-  rectAbs(0, 0, W, 4, C.ceiling);
-  rectAbs(0, 4, W, 2, C.wallLine);
+  rectAbs(0, 0, W, 5, C.ceiling);
+  rectAbs(0, 5, W, 3, C.wallLine);
 
   // Floor
   rectAbs(0, FLOOR_Y, W, H - FLOOR_Y, C.floor);
   // Floor tile lines
-  for (let fx = -camX % 48; fx < W; fx += 48) {
+  for (let fx = -camX % 60; fx < W; fx += 60) {
     rectAbs(fx, FLOOR_Y, 1, H - FLOOR_Y, C.floorLine);
   }
   // Floor highlight
@@ -294,194 +310,197 @@ function drawRoom() {
 // ── Draw decorations ───────────────────────────────────────
 function drawWindow(x) {
   const sx = x - camX;
+  const wy = 140; // lowered windows
   // Frame
-  rectAbs(sx, 80, 100, 120, C.grayDk);
+  rectAbs(sx, wy, 130, 150, C.grayDk);
   // Glass
-  rectAbs(sx + 6, 86, 88, 108, '#3a5a7a');
+  rectAbs(sx + 7, wy + 7, 116, 136, '#4a7a9a');
   // Cross bars
-  rectAbs(sx + 48, 86, 4, 108, C.gray);
-  rectAbs(sx + 6, 136, 88, 4, C.gray);
+  rectAbs(sx + 62, wy + 7, 5, 136, C.gray);
+  rectAbs(sx + 7, wy + 72, 116, 5, C.gray);
   // Sky gradient in glass
-  const grad = ctx.createLinearGradient(0, 86, 0, 194);
-  grad.addColorStop(0, 'rgba(100,160,220,0.3)');
-  grad.addColorStop(1, 'rgba(60,100,160,0.1)');
+  const grad = ctx.createLinearGradient(0, wy + 7, 0, wy + 143);
+  grad.addColorStop(0, 'rgba(120,180,240,0.35)');
+  grad.addColorStop(1, 'rgba(80,120,180,0.12)');
   ctx.fillStyle = grad;
-  ctx.fillRect(sx + 6, 86, 88, 108);
+  ctx.fillRect(sx + 7, wy + 7, 116, 136);
   // Light beam
-  ctx.fillStyle = 'rgba(255,245,200,0.04)';
+  ctx.fillStyle = 'rgba(255,250,210,0.05)';
   ctx.beginPath();
-  ctx.moveTo(sx + 10, 194);
-  ctx.lineTo(sx + 90, 194);
-  ctx.lineTo(sx + 120, FLOOR_Y + 80);
-  ctx.lineTo(sx - 20, FLOOR_Y + 80);
+  ctx.moveTo(sx + 14, wy + 143);
+  ctx.lineTo(sx + 116, wy + 143);
+  ctx.lineTo(sx + 150, FLOOR_Y + 100);
+  ctx.lineTo(sx - 20, FLOOR_Y + 100);
   ctx.fill();
   // Sill
-  rectAbs(sx - 4, 198, 108, 6, C.gray);
+  rectAbs(sx - 5, wy + 150, 140, 8, C.gray);
 }
 
 function drawPlant(x) {
   const sx = x - camX;
   const by = FLOOR_Y;
   // Pot
-  rectAbs(sx, by - 30, 30, 30, C.pot);
-  rectAbs(sx - 3, by - 32, 36, 6, C.pot);
-  rectAbs(sx + 2, by - 32, 26, 3, C.woodDk);
+  rectAbs(sx, by - 40, 40, 40, C.pot);
+  rectAbs(sx - 4, by - 44, 48, 8, C.pot);
+  rectAbs(sx + 3, by - 44, 34, 4, C.woodDk);
   // Leaves
-  const leaves = [[8,-36],[18,-40],[4,-48],[22,-44],[12,-54],[0,-42],[26,-38]];
+  const leaves = [[10,-48],[24,-54],[5,-64],[30,-58],[16,-72],[0,-56],[34,-50],[18,-80]];
   for (const [lx, ly] of leaves) {
-    rectAbs(sx + lx, by + ly, 10, 8, C.plant);
-    rectAbs(sx + lx + 2, by + ly + 2, 6, 4, C.plantDk);
+    rectAbs(sx + lx, by + ly, 14, 10, C.plant);
+    rectAbs(sx + lx + 3, by + ly + 2, 8, 6, C.plantDk);
   }
   // Stem
-  rectAbs(sx + 13, by - 44, 3, 14, C.plantDk);
+  rectAbs(sx + 17, by - 60, 4, 18, C.plantDk);
 }
 
 // ── Draw furniture ─────────────────────────────────────────
 function drawCoffeeMachine(obj) {
   const x = obj.x, by = obj.y;
   // Table
-  rect(x, by - 40, 90, 8, C.wood);
-  rect(x, by - 36, 90, 4, C.woodDk);
+  rect(x, by - 54, 120, 10, C.wood);
+  rect(x, by - 48, 120, 6, C.woodDk);
   // Table legs
-  rect(x + 6, by - 32, 6, 32, C.woodDk);
-  rect(x + 78, by - 32, 6, 32, C.woodDk);
+  rect(x + 8, by - 42, 8, 42, C.woodDk);
+  rect(x + 104, by - 42, 8, 42, C.woodDk);
   // Machine body
-  rect(x + 20, by - 90, 50, 50, C.coffeeMach);
-  rect(x + 20, by - 90, 50, 6, C.grayLt);
-  rect(x + 20, by - 44, 50, 4, C.grayDk);
+  rect(x + 26, by - 118, 68, 64, C.coffeeMach);
+  rect(x + 26, by - 118, 68, 8, C.grayLt);
+  rect(x + 26, by - 58, 68, 5, C.grayDk);
   // Display
-  rect(x + 28, by - 80, 20, 10, '#1a2a1a');
-  rect(x + 30, by - 78, 16, 6, '#2a5a2a');
+  rect(x + 36, by - 104, 26, 14, '#1a2a1a');
+  rect(x + 39, by - 101, 20, 8, '#2a6a2a');
   // Buttons
-  rect(x + 52, by - 78, 8, 8, C.red);
-  rect(x + 52, by - 66, 8, 8, C.green);
+  rect(x + 70, by - 102, 10, 10, C.red);
+  rect(x + 70, by - 88, 10, 10, C.green);
   // Drip nozzle
-  rect(x + 38, by - 46, 14, 6, C.grayDk);
+  rect(x + 50, by - 60, 18, 8, C.grayDk);
   // Cup
-  rect(x + 35, by - 50, 10, 10, C.white);
-  rect(x + 36, by - 49, 8, 4, C.coffee);
+  rect(x + 46, by - 66, 14, 14, C.white);
+  rect(x + 48, by - 64, 10, 6, C.coffee);
   // Steam
   const t = Date.now() / 500;
   for (let i = 0; i < 3; i++) {
-    const sx = x + 38 + Math.sin(t + i * 1.8) * 4;
-    const sy = by - 54 - i * 8;
-    ctx.fillStyle = `rgba(200,200,220,${0.35 - i * 0.1})`;
-    ctx.fillRect(Math.round(sx - camX), Math.round(sy), 4, 4);
+    const sx = x + 51 + Math.sin(t + i * 1.8) * 5;
+    const sy = by - 72 - i * 10;
+    ctx.fillStyle = `rgba(210,210,230,${0.4 - i * 0.12})`;
+    ctx.fillRect(Math.round(sx - camX), Math.round(sy), 5, 5);
   }
 }
 
 function drawDesk(obj) {
   const x = obj.x, by = obj.y;
   // Desk surface
-  rect(x, by - 34, 160, 8, C.wood);
-  rect(x, by - 28, 160, 4, C.woodDk);
+  rect(x, by - 46, 210, 10, C.wood);
+  rect(x, by - 38, 210, 5, C.woodDk);
   // Legs
-  rect(x + 8, by - 24, 6, 24, C.woodDk);
-  rect(x + 146, by - 24, 6, 24, C.woodDk);
+  rect(x + 10, by - 33, 8, 33, C.woodDk);
+  rect(x + 192, by - 33, 8, 33, C.woodDk);
   // Drawer
-  rect(x + 120, by - 24, 34, 18, C.wood);
-  rect(x + 132, by - 16, 10, 2, C.gold);
+  rect(x + 158, by - 33, 44, 24, C.wood);
+  rect(x + 174, by - 22, 12, 3, C.gold);
   // Chair
-  rect(x + 60, by - 20, 40, 6, C.purpleDk);
-  rect(x + 64, by - 14, 4, 14, C.grayDk);
-  rect(x + 92, by - 14, 4, 14, C.grayDk);
-  rect(x + 58, by - 44, 44, 26, C.purple);
-  rect(x + 60, by - 42, 40, 22, '#7a6a9a');
+  rect(x + 80, by - 28, 52, 8, C.purpleDk);
+  rect(x + 84, by - 20, 6, 20, C.grayDk);
+  rect(x + 122, by - 20, 6, 20, C.grayDk);
+  rect(x + 76, by - 60, 58, 34, C.purple);
+  rect(x + 80, by - 56, 50, 26, '#8a7aaa');
   // Monitor
-  rect(x + 36, by - 72, 50, 34, '#222238');
-  rect(x + 40, by - 68, 42, 26, C.screen);
+  rect(x + 46, by - 98, 66, 46, '#2a2a42');
+  rect(x + 52, by - 92, 54, 34, C.screen);
   // Code on screen
-  const lines = [14, 28, 20, 10, 24, 18];
+  const lines = [18, 36, 26, 14, 32, 24, 20, 30];
   for (let i = 0; i < lines.length; i++) {
-    rect(x + 44, by - 64 + i * 4, lines[i], 2, '#4a9ac8');
-    if (i % 2 === 0) rect(x + 44 + lines[i] + 2, by - 64 + i * 4, 8, 2, '#9ac84a');
+    rect(x + 58, by - 86 + i * 4, lines[i], 2, '#4aa0d0');
+    if (i % 2 === 0) rect(x + 58 + lines[i] + 3, by - 86 + i * 4, 10, 2, '#a0d04a');
   }
   // Monitor stand
-  rect(x + 54, by - 38, 14, 4, '#222238');
-  rect(x + 50, by - 36, 22, 3, '#333348');
+  rect(x + 72, by - 52, 18, 6, '#2a2a42');
+  rect(x + 66, by - 48, 30, 4, '#3a3a52');
   // MacBook (closed) next to monitor
-  rect(x + 100, by - 40, 30, 3, C.grayDk);
-  rect(x + 102, by - 42, 26, 3, C.gray);
+  rect(x + 132, by - 54, 40, 4, C.grayDk);
+  rect(x + 135, by - 56, 34, 4, C.gray);
   // Coffee mug
-  rect(x + 14, by - 44, 12, 10, C.white);
-  rect(x + 15, by - 43, 10, 4, C.coffee);
+  rect(x + 18, by - 60, 16, 14, C.white);
+  rect(x + 20, by - 58, 12, 6, C.coffee);
   // Small plant
-  rect(x + 140, by - 46, 14, 12, C.pot);
-  rect(x + 141, by - 52, 12, 8, C.plant);
+  rect(x + 184, by - 62, 18, 16, C.pot);
+  rect(x + 186, by - 70, 14, 10, C.plant);
 }
 
 function drawNoticeBoard(obj) {
   const x = obj.x, y = obj.y;
   // Board frame
-  rect(x, y, 160, 100, C.wood);
+  rect(x, y, 200, 120, C.wood);
   // Cork
-  rect(x + 6, y + 6, 148, 88, C.corkDk);
-  rect(x + 8, y + 8, 144, 84, C.cork);
+  rect(x + 7, y + 7, 186, 106, C.corkDk);
+  rect(x + 10, y + 10, 180, 100, C.cork);
   // Pinned notes
   const notes = [
-    { nx: 12, ny: 12, nw: 40, nh: 30, color: '#e8e0a0', pin: C.red,  label: '👟' },
-    { nx: 58, ny: 10, nw: 36, nh: 34, color: '#a0c8e8', pin: C.blue, label: '☕' },
-    { nx: 100, ny: 12, nw: 42, nh: 28, color: '#c0e8c0', pin: C.green, label: '⚡' },
-    { nx: 14, ny: 48, nw: 44, nh: 32, color: '#e8c0c0', pin: C.gold,  label: '🖥️' },
-    { nx: 64, ny: 50, nw: 38, nh: 30, color: C.paper,   pin: C.red,   label: '🤖' },
-    { nx: 108, ny: 46, nw: 36, nh: 34, color: '#d0c0e8', pin: C.blue,  label: '🎮' },
+    { nx: 14, ny: 14, nw: 52, nh: 36, color: '#f0e8b0', pin: C.red,  label: '👟' },
+    { nx: 72, ny: 12, nw: 48, nh: 40, color: '#b0d8f0', pin: C.blue, label: '☕' },
+    { nx: 128, ny: 14, nw: 52, nh: 34, color: '#c8f0c8', pin: C.green, label: '⚡' },
+    { nx: 16, ny: 58, nw: 56, nh: 40, color: '#f0d0d0', pin: C.gold,  label: '🖥️' },
+    { nx: 80, ny: 60, nw: 48, nh: 38, color: C.paper,   pin: C.red,   label: '🤖' },
+    { nx: 136, ny: 56, nw: 48, nh: 42, color: '#d8c8f0', pin: C.blue,  label: '🎮' },
   ];
   for (const n of notes) {
     rect(x + n.nx, y + n.ny, n.nw, n.nh, n.color);
     // Pin
-    rect(x + n.nx + n.nw / 2 - 3, y + n.ny - 2, 6, 6, n.pin);
+    rect(x + n.nx + n.nw / 2 - 4, y + n.ny - 3, 8, 8, n.pin);
     // "text" lines
     for (let i = 0; i < 3; i++) {
-      rect(x + n.nx + 4, y + n.ny + 10 + i * 6, n.nw - 8 - i * 6, 2, 'rgba(0,0,0,0.12)');
+      rect(x + n.nx + 5, y + n.ny + 12 + i * 7, n.nw - 10 - i * 8, 2, 'rgba(0,0,0,0.12)');
     }
   }
 }
 
 function drawBookshelf(obj) {
   const x = obj.x, by = obj.y;
+  const shelfH = 200;
   // Frame
-  rect(x, by - 160, 80, 160, C.wood);
-  rect(x + 2, by - 158, 76, 156, C.woodDk);
+  rect(x, by - shelfH, 110, shelfH, C.wood);
+  rect(x + 3, by - shelfH + 3, 104, shelfH - 6, C.woodDk);
   // Shelves
-  const shelfY = [by - 158, by - 118, by - 78, by - 38];
-  const bookColors = [C.red, C.blue, C.green, C.gold, C.purple, '#c8725a', '#5ac8c8', C.screen];
-  for (let s = 0; s < 4; s++) {
-    const sy = shelfY[s];
+  const count = 4;
+  const slotH = shelfH / count;
+  const bookColors = [C.red, C.blue, C.green, C.gold, C.purple, '#d88060', '#60d0d0', C.screen];
+  for (let s = 0; s < count; s++) {
+    const sy = by - shelfH + s * slotH;
     // Shelf board
-    rect(x + 2, sy + 36, 76, 4, C.woodLt);
+    rect(x + 3, sy + slotH - 4, 104, 5, C.woodLt);
     // Books
-    let bx = x + 6;
+    let bx = x + 8;
     for (let b = 0; b < 5 + (s % 2); b++) {
-      const bw = 6 + ((b * 7 + s * 13) % 6);
-      const bh = 28 + ((b * 3 + s * 5) % 8);
+      const bw = 8 + ((b * 7 + s * 13) % 7);
+      const bh = 34 + ((b * 3 + s * 5) % 10);
       const color = bookColors[(b + s * 3) % bookColors.length];
-      rect(bx, sy + 36 - bh, bw, bh, color);
-      // Spine detail
-      rect(bx + 1, sy + 36 - bh + 4, bw - 2, 2, 'rgba(255,255,255,0.2)');
-      bx += bw + 2;
-      if (bx > x + 72) break;
+      rect(bx, sy + slotH - 5 - bh, bw, bh, color);
+      rect(bx + 2, sy + slotH - 5 - bh + 5, bw - 4, 3, 'rgba(255,255,255,0.2)');
+      bx += bw + 3;
+      if (bx > x + 98) break;
     }
   }
-  border(x, by - 160, 80, 160, C.woodLt, 2);
+  border(x, by - shelfH, 110, shelfH, C.woodLt, 2);
 }
 
 function drawServer(obj) {
   const x = obj.x, by = obj.y;
+  const rackH = 170;
   // Rack frame
-  rect(x, by - 130, 70, 130, '#3a3a4a');
-  border(x, by - 130, 70, 130, C.grayDk, 2);
+  rect(x, by - rackH, 90, rackH, '#4a4a5a');
+  border(x, by - rackH, 90, rackH, C.grayDk, 2);
   // Units
   for (let i = 0; i < 5; i++) {
-    const uy = by - 124 + i * 24;
-    rect(x + 6, uy, 58, 20, '#2a2a3a');
+    const uy = by - rackH + 6 + i * 32;
+    rect(x + 8, uy, 74, 26, '#323244');
     // Blinking lights
     const t = Date.now() / 400;
-    rect(x + 10, uy + 6, 5, 5, Math.sin(t + i * 1.7) > 0 ? '#4ae84a' : '#1a3a1a');
-    rect(x + 18, uy + 6, 5, 5, Math.sin(t + i * 2.3) > 0.3 ? C.gold : '#3a3a2a');
-    rect(x + 26, uy + 6, 5, 5, Math.sin(t + i * 0.9) > 0.5 ? C.screen : '#1a2a3a');
+    rect(x + 14, uy + 8, 6, 6, Math.sin(t + i * 1.7) > 0 ? '#5af05a' : '#1a4a1a');
+    rect(x + 24, uy + 8, 6, 6, Math.sin(t + i * 2.3) > 0.3 ? C.gold : '#4a4a32');
+    rect(x + 34, uy + 8, 6, 6, Math.sin(t + i * 0.9) > 0.5 ? C.screen : '#1a3a4a');
     // Vent lines
     for (let v = 0; v < 3; v++) {
-      rect(x + 38 + v * 8, uy + 4, 5, 12, '#3a3a4a');
+      rect(x + 50 + v * 10, uy + 6, 6, 16, '#4a4a5a');
     }
   }
 }
@@ -489,146 +508,151 @@ function drawServer(obj) {
 function drawWhiteboard(obj) {
   const x = obj.x, y = obj.y;
   // Frame
-  rect(x, y, 140, 90, C.gray);
+  rect(x, y, 180, 110, C.gray);
   // White surface
-  rect(x + 5, y + 5, 130, 72, C.white);
+  rect(x + 6, y + 6, 168, 88, C.white);
   // Marker tray
-  rect(x + 10, y + 80, 120, 6, C.grayDk);
-  rect(x + 16, y + 78, 20, 4, C.red);
-  rect(x + 42, y + 78, 20, 4, C.blue);
-  rect(x + 68, y + 78, 20, 4, '#2a2a2a');
+  rect(x + 12, y + 98, 156, 8, C.grayDk);
+  rect(x + 20, y + 96, 24, 5, C.red);
+  rect(x + 52, y + 96, 24, 5, C.blue);
+  rect(x + 84, y + 96, 24, 5, '#2a2a2a');
   // Diagram on board
-  rect(x + 14, y + 14, 30, 16, 'rgba(90,122,200,0.25)');
-  border(x + 14, y + 14, 30, 16, C.blue, 1);
-  rect(x + 56, y + 14, 30, 16, 'rgba(90,122,200,0.25)');
-  border(x + 56, y + 14, 30, 16, C.blue, 1);
-  rect(x + 98, y + 14, 30, 16, 'rgba(90,122,200,0.25)');
-  border(x + 98, y + 14, 30, 16, C.blue, 1);
+  rect(x + 18, y + 18, 38, 20, 'rgba(100,140,220,0.25)');
+  border(x + 18, y + 18, 38, 20, C.blue, 1);
+  rect(x + 72, y + 18, 38, 20, 'rgba(100,140,220,0.25)');
+  border(x + 72, y + 18, 38, 20, C.blue, 1);
+  rect(x + 126, y + 18, 38, 20, 'rgba(100,140,220,0.25)');
+  border(x + 126, y + 18, 38, 20, C.blue, 1);
   // Arrows
-  rect(x + 44, y + 20, 12, 3, C.blue);
-  rect(x + 86, y + 20, 12, 3, C.blue);
+  rect(x + 56, y + 26, 16, 4, C.blue);
+  rect(x + 110, y + 26, 16, 4, C.blue);
   // Labels
-  rect(x + 16, y + 40, 40, 2, 'rgba(200,90,90,0.4)');
-  rect(x + 16, y + 46, 30, 2, 'rgba(200,90,90,0.4)');
-  rect(x + 16, y + 52, 50, 2, 'rgba(200,90,90,0.4)');
-  rect(x + 16, y + 58, 20, 2, 'rgba(200,90,90,0.4)');
-  // "GitHub" / "LinkedIn" labels hinted
-  rect(x + 80, y + 42, 36, 12, 'rgba(90,122,200,0.15)');
-  rect(x + 80, y + 58, 36, 12, 'rgba(90,122,200,0.15)');
+  rect(x + 20, y + 48, 50, 3, 'rgba(220,100,100,0.4)');
+  rect(x + 20, y + 56, 38, 3, 'rgba(220,100,100,0.4)');
+  rect(x + 20, y + 64, 62, 3, 'rgba(220,100,100,0.4)');
+  rect(x + 20, y + 72, 28, 3, 'rgba(220,100,100,0.4)');
+  // Link hints
+  rect(x + 100, y + 50, 46, 14, 'rgba(100,140,220,0.15)');
+  rect(x + 100, y + 70, 46, 14, 'rgba(100,140,220,0.15)');
 }
 
 function drawCouch(obj) {
   const x = obj.x, by = obj.y;
   // Shadow
-  rect(x + 6, by - 2, 130, 6, C.shadow);
+  rect(x + 8, by - 2, 170, 8, C.shadow);
   // Base/seat
-  rect(x, by - 36, 130, 24, C.purpleDk);
+  rect(x, by - 48, 170, 32, C.purpleDk);
   // Back
-  rect(x + 4, by - 60, 122, 28, C.purple);
-  rect(x + 8, by - 56, 114, 20, '#7a6a9a');
+  rect(x + 6, by - 78, 158, 34, C.purple);
+  rect(x + 10, by - 74, 150, 26, '#8a7aaa');
   // Arms
-  rect(x - 4, by - 50, 12, 40, C.purpleDk);
-  rect(x + 122, by - 50, 12, 40, C.purpleDk);
+  rect(x - 6, by - 66, 16, 54, C.purpleDk);
+  rect(x + 160, by - 66, 16, 54, C.purpleDk);
   // Cushion lines
-  rect(x + 42, by - 34, 2, 20, C.purpleDk);
-  rect(x + 86, by - 34, 2, 20, C.purpleDk);
+  rect(x + 56, by - 46, 3, 28, C.purpleDk);
+  rect(x + 113, by - 46, 3, 28, C.purpleDk);
   // Pillow
-  rect(x + 14, by - 42, 22, 16, C.gold);
-  rect(x + 16, by - 40, 18, 4, '#c8b060');
+  rect(x + 18, by - 56, 30, 22, C.gold);
+  rect(x + 20, by - 53, 26, 5, '#d0c068');
   // Legs
-  rect(x + 8, by - 12, 6, 12, C.grayDk);
-  rect(x + 116, by - 12, 6, 12, C.grayDk);
+  rect(x + 10, by - 16, 8, 16, C.grayDk);
+  rect(x + 152, by - 16, 8, 16, C.grayDk);
 }
 
-// ── Draw player (side view) ───────────────────────────────
+// ── Draw player (side view, bigger) ───────────────────────
 function drawPlayer() {
-  const x = Math.round(player.x - camX);
+  const px = Math.round(player.x - camX);
   const by = Math.round(player.y);
   const d = player.dir;
-  const bounce = player.moving ? Math.sin(player.frameTick * 0.3) * 2 : 0;
-  const legSwing = player.moving ? Math.sin(player.frameTick * 0.35) * 6 : 0;
+  const bounce = player.moving ? Math.sin(player.frameTick * 0.3) * 3 : 0;
+  const legSwing = player.moving ? Math.sin(player.frameTick * 0.35) * 8 : 0;
 
   // Shadow
   ctx.fillStyle = C.shadow;
   ctx.beginPath();
-  ctx.ellipse(x + 8, by + 2, 12, 4, 0, 0, Math.PI * 2);
+  ctx.ellipse(px + 14, by + 3, 18, 6, 0, 0, Math.PI * 2);
   ctx.fill();
 
   // Legs
-  rectAbs(x + 2, by - 12 + legSwing * 0.5, 5, 12, C.pants);
-  rectAbs(x + 9, by - 12 - legSwing * 0.5, 5, 12, C.pants);
-  // Shoes
-  rectAbs(x + 1, by - 2 + legSwing * 0.5, 6, 4, C.white);
-  rectAbs(x + 9, by - 2 - legSwing * 0.5, 6, 4, C.white);
-  // Shoe accent (sneakers!)
-  rectAbs(x + 1, by + legSwing * 0.5, 6, 2, C.red);
-  rectAbs(x + 9, by - legSwing * 0.5, 6, 2, C.blue);
+  rectAbs(px + 3, by - 18 + legSwing * 0.5, 8, 18, C.pants);
+  rectAbs(px + 17, by - 18 - legSwing * 0.5, 8, 18, C.pants);
+  // Shoes (sneakers!)
+  rectAbs(px + 1, by - 3 + legSwing * 0.5, 10, 6, C.white);
+  rectAbs(px + 17, by - 3 - legSwing * 0.5, 10, 6, C.white);
+  // Shoe accent
+  rectAbs(px + 1, by + 1 + legSwing * 0.5, 10, 3, C.red);
+  rectAbs(px + 17, by + 1 - legSwing * 0.5, 10, 3, C.blue);
 
   // Body / shirt
-  rectAbs(x + 1, by - 24 - bounce, 14, 14, C.shirt);
+  rectAbs(px + 1, by - 38 - bounce, 26, 22, C.shirt);
+  // Shirt collar
+  rectAbs(px + 8, by - 40 - bounce, 12, 4, '#4a78d0');
   // Shirt detail
-  rectAbs(x + 6, by - 22 - bounce, 4, 10, '#3a6ab8');
+  rectAbs(px + 11, by - 36 - bounce, 6, 16, '#4a78d0');
 
-  // Arm
-  const armSwing = player.moving ? Math.sin(player.frameTick * 0.35) * 4 : 0;
+  // Arms
+  const armSwing = player.moving ? Math.sin(player.frameTick * 0.35) * 5 : 0;
   if (d === 1) {
-    rectAbs(x + 13, by - 22 - bounce + armSwing, 4, 10, C.shirt);
-    rectAbs(x + 13, by - 14 - bounce + armSwing, 4, 4, C.skin);
+    rectAbs(px + 24, by - 36 - bounce + armSwing, 6, 16, C.shirt);
+    rectAbs(px + 24, by - 22 - bounce + armSwing, 6, 6, C.skin);
   } else {
-    rectAbs(x - 1, by - 22 - bounce + armSwing, 4, 10, C.shirt);
-    rectAbs(x - 1, by - 14 - bounce + armSwing, 4, 4, C.skin);
+    rectAbs(px - 2, by - 36 - bounce + armSwing, 6, 16, C.shirt);
+    rectAbs(px - 2, by - 22 - bounce + armSwing, 6, 6, C.skin);
   }
 
   // Head
-  rectAbs(x + 1, by - 38 - bounce, 14, 14, C.skin);
+  rectAbs(px + 2, by - 58 - bounce, 24, 22, C.skin);
   // Hair
-  rectAbs(x, by - 40 - bounce, 16, 6, C.hair);
+  rectAbs(px, by - 62 - bounce, 28, 10, C.hair);
   if (d === 1) {
-    rectAbs(x, by - 38 - bounce, 4, 10, C.hair);
+    rectAbs(px, by - 58 - bounce, 6, 16, C.hair);
   } else {
-    rectAbs(x + 12, by - 38 - bounce, 4, 10, C.hair);
+    rectAbs(px + 22, by - 58 - bounce, 6, 16, C.hair);
   }
-  // Eye
+  // Eyes
   if (d === 1) {
-    rectAbs(x + 10, by - 34 - bounce, 3, 3, '#2a2a3a');
+    rectAbs(px + 17, by - 52 - bounce, 5, 5, '#2a2a42');
+    // Eye highlight
+    rectAbs(px + 19, by - 52 - bounce, 2, 2, '#4a4a6a');
   } else {
-    rectAbs(x + 3, by - 34 - bounce, 3, 3, '#2a2a3a');
+    rectAbs(px + 6, by - 52 - bounce, 5, 5, '#2a2a42');
+    rectAbs(px + 7, by - 52 - bounce, 2, 2, '#4a4a6a');
   }
   // Mouth
-  rectAbs(x + (d === 1 ? 9 : 4), by - 29 - bounce, 3, 2, '#c8a080');
+  rectAbs(px + (d === 1 ? 16 : 7), by - 43 - bounce, 5, 3, '#d0a888');
 }
 
 // ── Interaction prompts ────────────────────────────────────
 function drawPrompts() {
   if (dialogOpen) return;
-  const px = player.x + player.w / 2;
+  const ppx = player.x + player.w / 2;
   for (const obj of objects) {
     const ox = obj.x + obj.w / 2;
-    const dist = Math.abs(px - ox);
-    if (dist < 60) {
+    const dist = Math.abs(ppx - ox);
+    if (dist < 80) {
       // In range — show E prompt
-      const bob = Math.sin(Date.now() / 400) * 3;
+      const bob = Math.sin(Date.now() / 400) * 4;
       const sx = ox - camX;
-      const sy = (obj.type === 'board' || obj.type === 'whiteboard') ? obj.y - 16 : obj.y - obj.h - 20;
+      const sy = (obj.type === 'board' || obj.type === 'whiteboard') ? obj.y - 20 : obj.y - obj.h - 24;
       ctx.fillStyle = C.gold;
-      ctx.font = 'bold 12px "Courier New", monospace';
+      ctx.font = 'bold 16px "Courier New", monospace';
       ctx.textAlign = 'center';
       ctx.fillText('[E] ' + obj.label, sx, sy + bob);
       // Glow
-      ctx.fillStyle = 'rgba(224, 200, 114, 0.08)';
+      ctx.fillStyle = 'rgba(240, 216, 120, 0.1)';
       ctx.beginPath();
-      ctx.arc(sx, sy + 30, 40, 0, Math.PI * 2);
+      ctx.arc(sx, sy + 40, 50, 0, Math.PI * 2);
       ctx.fill();
       ctx.textAlign = 'left';
-    } else if (dist < 150) {
+    } else if (dist < 200) {
       // Nearby sparkle
       const sparkle = Math.sin(Date.now() / 300 + obj.x) > 0.7;
       if (sparkle) {
         const sx = ox - camX;
         const sy = (obj.type === 'board' || obj.type === 'whiteboard') ? obj.y + obj.h / 2 : obj.y - obj.h / 2;
-        ctx.fillStyle = 'rgba(224, 200, 114, 0.5)';
-        ctx.fillRect(sx - 2, sy - 2, 4, 4);
-        ctx.fillRect(sx + 8, sy - 8, 3, 3);
+        ctx.fillStyle = 'rgba(240, 216, 120, 0.6)';
+        ctx.fillRect(sx - 3, sy - 3, 6, 6);
+        ctx.fillRect(sx + 10, sy - 10, 4, 4);
       }
     }
   }
@@ -636,12 +660,12 @@ function drawPrompts() {
 
 // ── Interaction ────────────────────────────────────────────
 function tryInteract() {
-  const px = player.x + player.w / 2;
+  const ppx = player.x + player.w / 2;
   let closest = null, closestDist = Infinity;
   for (const obj of objects) {
     const ox = obj.x + obj.w / 2;
-    const dist = Math.abs(px - ox);
-    if (dist < 60 && dist < closestDist) {
+    const dist = Math.abs(ppx - ox);
+    if (dist < 80 && dist < closestDist) {
       closest = obj;
       closestDist = dist;
     }
@@ -661,8 +685,8 @@ function update() {
   player.x += dx * PLAYER_SPEED;
 
   // Clamp to world
-  if (player.x < 30) player.x = 30;
-  if (player.x > WORLD_W - 30) player.x = WORLD_W - 30;
+  if (player.x < 40) player.x = 40;
+  if (player.x > WORLD_W - 40) player.x = WORLD_W - 40;
 
   // Animation tick
   if (player.moving) {
@@ -680,43 +704,43 @@ function update() {
 
 // ── Ceiling lights ─────────────────────────────────────────
 function drawLights() {
-  for (let lx = 200; lx < WORLD_W; lx += 350) {
+  for (let lx = 250; lx < WORLD_W; lx += 400) {
     const sx = lx - camX;
     // Fixture
-    rectAbs(sx - 8, 6, 16, 6, C.grayDk);
-    rectAbs(sx - 2, 12, 4, 8, C.grayDk);
-    rectAbs(sx - 12, 18, 24, 4, C.grayLt);
+    rectAbs(sx - 10, 8, 20, 8, C.grayDk);
+    rectAbs(sx - 3, 16, 6, 10, C.grayDk);
+    rectAbs(sx - 16, 24, 32, 5, C.grayLt);
     // Light glow
-    const grad = ctx.createRadialGradient(sx, 22, 4, sx, 22, 180);
-    grad.addColorStop(0, 'rgba(255,245,210,0.07)');
-    grad.addColorStop(1, 'rgba(255,245,210,0)');
+    const grad = ctx.createRadialGradient(sx, 29, 6, sx, 29, 220);
+    grad.addColorStop(0, 'rgba(255,250,220,0.09)');
+    grad.addColorStop(1, 'rgba(255,250,220,0)');
     ctx.fillStyle = grad;
-    ctx.fillRect(sx - 180, 22, 360, FLOOR_Y - 22);
+    ctx.fillRect(sx - 220, 29, 440, FLOOR_Y - 29);
   }
 }
 
 // ── Draw everything sorted by depth ───────────────────────
 function drawScene() {
-  // Decorations behind player (windows first, then wall-mounted items)
+  // Windows (behind everything)
   for (const d of decorations) {
     if (d.type === 'window') drawWindow(d.x);
   }
 
   drawLights();
 
-  // Wall-mounted objects (boards, whiteboard) drawn on wall
+  // Wall-mounted objects
   for (const obj of objects) {
     if (obj.type === 'board') drawNoticeBoard(obj);
     if (obj.type === 'whiteboard') drawWhiteboard(obj);
   }
 
-  // Floor-level objects sorted by visual depth
-  // Furniture behind player
+  // Tall furniture (behind player)
   for (const obj of objects) {
     if (obj.type === 'bookshelf') drawBookshelf(obj);
     if (obj.type === 'server') drawServer(obj);
   }
 
+  // Other furniture
   for (const obj of objects) {
     if (obj.type === 'desk') drawDesk(obj);
     if (obj.type === 'coffee') drawCoffeeMachine(obj);
