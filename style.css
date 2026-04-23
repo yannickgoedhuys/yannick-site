@@ -1,7 +1,7 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-  background: #1a1a2e;
+  background: #e8e4dc;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -24,22 +24,22 @@ body {
   width: 100%;
   max-width: 800px;
   padding: 8px 12px;
-  background: #0f0f23;
-  border: 2px solid #3a3a5c;
+  background: #f5f3ee;
+  border: 2px solid #b0a890;
   border-bottom: none;
-  color: #8888aa;
+  color: #5a5548;
   font-size: 13px;
 }
 
 #hud-name {
-  color: #e0c872;
+  color: #8a6020;
   font-weight: bold;
   letter-spacing: 1px;
 }
 
 canvas#game {
-  border: 2px solid #3a3a5c;
-  background: #2a2a4a;
+  border: 2px solid #a09880;
+  background: #d8d4c8;
   display: block;
 }
 
@@ -51,26 +51,26 @@ canvas#game {
   transform: translateX(-50%);
   width: 85%;
   max-width: 700px;
-  background: #0f0f23ee;
-  border: 3px solid #e0c872;
+  background: #f5f3eeee;
+  border: 3px solid #c09840;
   border-radius: 4px;
   padding: 20px 24px 14px;
-  color: #d4d4e8;
+  color: #2a2a1a;
   font-size: 15px;
   line-height: 1.6;
   z-index: 10;
-  box-shadow: 0 0 30px rgba(224, 200, 114, 0.15);
+  box-shadow: 0 0 30px rgba(192, 152, 64, 0.20);
 }
 
 #dialog.hidden { display: none; }
 
 #dialog-title {
-  color: #e0c872;
+  color: #8a6020;
   font-weight: bold;
   font-size: 17px;
   margin-bottom: 10px;
   letter-spacing: 1px;
-  border-bottom: 1px solid #3a3a5c;
+  border-bottom: 1px solid #b0a890;
   padding-bottom: 8px;
 }
 
@@ -81,7 +81,7 @@ canvas#game {
 }
 
 #dialog-body a {
-  color: #72b8e0;
+  color: #2060a0;
   text-decoration: none;
 }
 #dialog-body a:hover {
@@ -91,6 +91,6 @@ canvas#game {
 #dialog-hint {
   margin-top: 12px;
   text-align: right;
-  color: #5a5a7c;
+  color: #7a7860;
   font-size: 12px;
 }
